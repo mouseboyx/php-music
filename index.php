@@ -41,7 +41,7 @@ textarea {
 <!-- <pre> -->
 <?php
 $errorarray = array();
-$alphabet = array("a","b","c","d","e","f","g","h","i","j","k","l","m","o","p","q","r","s","t","u","v","w","x","y","z");
+$alphabet = array("a","b","c","d","e","f","g","h","i","j","k","l","m","n","o","p","q","r","s","t","u","v","w","x","y","z");
 $allnotes = array("0000.wav","0001.wav","0002.wav","0003.wav","0004.wav","0005.wav","0006.wav","0007.wav","0008.wav","0009.wav","0010.wav","0011.wav","0012.wav","0013.wav","0014.wav","0015.wav","0016.wav","0017.wav","0018.wav","0019.wav","0020.wav","0021.wav","0022.wav","0023.wav","0024.wav","0025.wav","0026.wav","0027.wav","0028.wav","0029.wav","0030.wav","0031.wav","0032.wav","0033.wav","0034.wav","0035.wav","0036.wav","0037.wav","0038.wav","0039.wav","0040.wav","0041.wav","0042.wav","0043.wav","0044.wav","0045.wav","0046.wav","0047.wav");
 $basedir = '/home/mouse/ffmpegwork/';
 $emajor = array(0,2,4,5,7,9,11);
@@ -248,6 +248,20 @@ echo $input;
 }
 ?>
 <br>
+<table>
+
+<?php
+	echo '<tr>';
+	foreach ($alphabet as $letter) {
+		echo '<td>'.$letter.'</td>';
+	}
+	echo '</tr><tr>';
+	for ($i=0;$i<26;$i++) {
+		echo '<td>'.$i.'</td>';
+	}
+	echo '</tr>';
+?>
+</table>
 <!-- </pre> -->
 Enter english alphabet letters you wish to be converted to music, max 1000 notes.<br>
 <form method="post" action="">
