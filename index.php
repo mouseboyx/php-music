@@ -1157,6 +1157,8 @@ foreach ($files as $file) {
 getrecent($connection);
 ?>
 <hr>
+<a href="https://github.com/mouseboyx/php-music">View Source</a> on github.
+<hr>
 <?php
 include '../stats.php';
 ?>
@@ -1168,4 +1170,6 @@ include '../stats.php';
 <?php print_r($allscales); ?>
 </pre>
 <?php */ ?>
+
+
 </body>
