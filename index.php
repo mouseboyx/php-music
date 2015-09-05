@@ -30,7 +30,7 @@ function getrecent($connection) {
 	}
 }
 function return11ScalesFromG($gscale,$scalename) {
-$musicalnotation = array('gb', 'f', 'e', 'eb', 'd', 'db', 'c', 'b', 'bb', 'a', 'ab', 'g');
+$musicalnotation = array('gb', 'f&nbsp;', 'e&nbsp;', 'eb', 'd&nbsp;', 'db', 'c&nbsp;', 'b&nbsp;', 'bb', 'a&nbsp;', 'ab', 'g&nbsp;');
 $gslength=count($gscale);
 $tmp3 = array();
 $thescales = array();
@@ -107,7 +107,21 @@ $emajor = array(0,2,4,5,7,9,11);
 $gmajor = array(0,2,3,5,7,8,10);
 $gmajorarpeggio= array(3,7,10);
 $gpentatonicmajor = array(0,3,5,7,10);
-$gscales = array('major' => array(0,2,3,5,7,8,10), 'minor' => array(2,3,5,6,8,10,11), 'pentatonicmajor' => array(0,3,5,7,10), 'pentatonicminor' => array(1,3,6,8,10), 'majorarpeggio' => array(3,7,10), 'minorarpeggio' => array(3,6,10));
+$gscales = array(
+	' Major' => array(0,2,3,5,7,8,10),
+	' Minor' => array(2,3,5,6,8,10,11),
+	' Pentatonic Major' => array(0,3,5,7,10),
+	' Pentatonic Minor' => array(1,3,6,8,10),
+	' Major Blues' => array(0,3,5,6,7,10),
+	' Major Arpeggio' => array(3,7,10),
+	' Minor Arpeggio' => array(3,6,10),
+	' Bebop Major' => array(0,2,3,5,7,8,10,11),
+	' Arabian (a)' => array(0,2,3,5,6,8,9,11),
+	' Arabian (b)' => array(1,3,5,7,8,9,11),
+	' Wholetone' => array(1,3,5,7,9,11),
+	' Augmented' => array(3,7,11),
+	' Divide Octave' => array(3,9)
+);
 //$majorscalenames = array('gbmajor', 'fmajor', 'emajor', 'ebmajor', 'dmajor', 'dbmajor', 'cmajor', 'bmajor', 'bbmajor', 'amajor', 'abmajor', 'gmajor');
 //$notedirectories = array('sawtooth.125/', 'sawtooth.25/', 'sawtooth.5/', 'sawtooth1.0/');
 $notedirectories = array('sawtooth-fade','sawtooth-hard');
@@ -139,7 +153,7 @@ $chromaticscale= array();
 for ($i=0;$i<49;$i++) {
 	array_push($chromaticscale,$i);
 }
-$allscales['chromatic']=$chromaticscale;
+$allscales['Chromatic']=$chromaticscale;
 foreach ($gscales as $scalename => $scale) {
 $genscalearr = return11ScalesFromG($scale,$scalename);
 	foreach ($genscalearr as $genscalename => $genscale) {
@@ -233,7 +247,18 @@ table, td, tr {
 	padding:0;
 }
 }
-
+@media only screen and (max-width: 340px) {
+.fret, .guitar td { 
+	font-size:.7em;
+	padding:0;
+}
+}
+@media only screen and (max-width: 290px) {
+.fret, .guitar td { 
+	font-size:.6em;
+	padding:0;
+}
+}
 .transpose {
 	font-size:1.2em;
 	color:#6666ff;
@@ -246,15 +271,23 @@ table, td, tr {
 	font-size:1.2em;
 	color:#ffff00;
 }
+.shuffle {
+	font-size:1.2em;
+	color:#cc66ff;
+}
 div.box {
 	border:dashed 1px rgb(127,127,127);
 	margin-top:2px;
 	margin-bottom:2px;
 }
 div.error {
-	font-size:1.2em;
+	font-size:2em !important;
 	color:#ff0000;
 }
+input {
+font-family:monospace;
+}
+
 </style>
 <script type="text/javascript">
 function init() {
@@ -283,7 +316,7 @@ function init() {
 	?>];
 	<?php 
 	foreach ($allscales as $jskey => $jsscale) {
-		echo 'scales["'.$jskey.'"]=[';
+		echo 'scales["'.str_replace('&nbsp;',' ',$jskey).'"]=[';
 		foreach ($jsscale as $jsnote) {
 			if ($jsscale[count($jsscale)-1]==$jsnote) {
 				echo ''.$jsnote.'];';
@@ -294,7 +327,11 @@ function init() {
 		echo "\n";
 	}
 	?>
-
+	scalenotenames=[];
+	scalekey='Chromatic';
+	for (i=0;i<scales[scalekey].length;i++) {
+			scalenotenames[i] = alphabet[scales[scalekey][i]];
+	}
 	allas = document.getElementsByTagName("a");
 	input = document.getElementById("input");
 	for (i=0;i<(allas.length-1);i++) {
@@ -304,7 +341,7 @@ function init() {
 		}
 	}
 	alltds = document.getElementsByTagName("td");
-	for (i=0;i<(alltds.length-1);i++) {
+	for (i=0;i<(alltds.length);i++) {
 		if (alltds[i].getAttribute("class")=="letter") {
 			//document.body.innerHTML+=i;
 			alltds[i].addEventListener('click',function (event) { input.value+=event.target.innerHTML; });
@@ -339,12 +376,15 @@ function init() {
 
 	changefrets();
 	charcount();
+	setInterval(function () {charcount();},1000);
 	disablenotelength();
 	selectnotelengths(document.getElementById("notetype"));
 	disableother(document.getElementById("randomnotelength"));
 	disableother(document.getElementById("sequence"));
 
 	document.getElementById("showhidetools").addEventListener("click", function () { hideshow(document.getElementById("showhidetools"),document.getElementById("tools")); console.log(1); });
+	document.getElementById("generaterandom").addEventListener("click", function () { generaterandom() });
+	document.getElementById("generaterandomnorepeat").addEventListener("click", function () { generaterandom(true) });
 
 }
 function disablenotelength() {
@@ -381,10 +421,11 @@ function changefrets() {
 	scalekey = document.getElementById('guitarscales').value;
 	
 		
-	for (j=0;j<(alltds.length-1);j++) {
+	for (j=0;j<(alltds.length);j++) {
 		if (alltds[j].getAttribute("class")=="letter") {
 			
 			alltds[j].style.color="#aaaaaa";
+			alltds[j].style.backgroundColor="#131926";
 			
 		}
 	}
@@ -392,15 +433,21 @@ function changefrets() {
 	
 	for (i=0;i<scales[scalekey].length;i++) {
 		
-		for (j=0;j<(alltds.length-1);j++) {
+		for (j=0;j<(alltds.length);j++) {
 			if (alltds[j].getAttribute("class")=="letter") {
 				if (alltds[j].innerHTML==alphabet[scales[scalekey][i]]) {
 					alltds[j].style.color="#33ff33";
+					alltds[j].style.backgroundColor="#556455";
 					//document.body.innerHTML+=scales[scalekey][i];
 				}
 			}
 		}
 		
+	}
+	scalenotenames=[];
+	for (i=0;i<scales[scalekey].length;i++) {
+			scalenotenames[i] = alphabet[scales[scalekey][i]];
+			console.log(alphabet[scales[scalekey][i]]);
 	}
 		
 }
@@ -472,15 +519,25 @@ function insertString(add) {
 	
 	everyx = parseInt(document.getElementById("insertevery").value);
 	finishedstring = instring;
+	finishedstring=''
 	intostringlength = intostring.value.length;
 	if (everyx<1) {
 		everyx=1;
 	}
 	
 	for (i=0;i<intostringlength;i+=everyx) {
-		finishedstring+=intostring.value.substr((((i*everyx)-((1*i)))/(everyx+1)),(everyx))+instring;
-		console.log(((i*everyx)-((1*i))));
+		//if (i==0) {
+		//	j=1;
+		//} else {
+			
+			j=i+everyx;
+		//}
+		console.log(j+","+i);
+		finishedstring+=instring+intostring.value.substring(i,j);
+		//finishedstring+=intostring.value.substr((((i*everyx)-((1*i)))/(everyx+1)),(everyx))+instring;
+		//console.log(((i*everyx)-((1*i))));
 	}
+	//finishedstring+=instring;
 	if (add==true) {
 		input.value+=finishedstring;
 		intostring.value=finishedstring;
@@ -597,7 +654,86 @@ function hideshow(changetextelement,object) {
 		changetextelement.innerHTML="Show Tools";
 	}
 }
+function generaterandom(norepeat) {
+rlength = document.getElementById("randomlength").value;
+i=0;
+while (i<rlength) {
+	if (i>0) {
+		lastnotetmp=lastnote;
+	}
 
+	lastnote=Math.round(Math.random()*(scalenotenames.length-1));
+
+	if (i>0) {	
+		if (norepeat==true) {
+			if (lastnotetmp==lastnote) {
+				continue;
+			}
+		}
+	}
+	input.value+=scalenotenames[lastnote];
+	i++;
+}
+}
+////http://bost.ocks.org/mike/shuffle/
+function shufflea(array) {
+  var currentIndex = array.length, temporaryValue, randomIndex ;
+
+  // While there remain elements to shuffle...
+  while (0 !== currentIndex) {
+
+    // Pick a remaining element...
+    randomIndex = Math.floor(Math.random() * currentIndex);
+    currentIndex -= 1;
+
+    // And swap it with the current element.
+    temporaryValue = array[currentIndex];
+    array[currentIndex] = array[randomIndex];
+    array[randomIndex] = temporaryValue;
+  }
+
+  return array;
+}
+//////////////
+function shuffletext(add) {
+	shufflet = document.getElementById("shuffle");
+	shufflelength = shufflet.value.length;
+	shufflearray=[];
+	for (i=0;i<shufflelength;i++) {
+		shufflearray[i]=shufflet.value[i];
+	}
+	shufflearray=shufflea(shufflearray);
+	shufflet.value='';
+	finishedstring='';
+	for (i=0;i<shufflelength;i++) {
+	finishedstring=finishedstring+shufflearray[i];
+	}
+	shufflet.value=finishedstring;
+		if (add==true) {
+			input.value+=finishedstring;
+		}
+	//console.log(shufflea(shufflearray));	
+	/*	
+	for (i=0; i<shufflelength-1; i++) {
+		shufflearray[i]=Math.round((shufflelength-1)*Math.random())
+	}
+	
+	shuffleduplicates=1;
+	while (shuffleduplicates>=1) {
+	shuffleduplicates=0;
+		for (i=0; i<shufflelength-1; i++) {
+			for (j=0; j<shufflelength-1; j++) {
+				if (shufflearray[j]==shufflearray[i]) {
+					shufflearray[i]=Math.round((shufflelength-1)*Math.random());
+					shuffleduplicates++;
+				}
+			}
+		}
+	}
+	*/
+	//alert(shufflearray);
+		
+}
 </script>
 </head>
 <body onload="init()">
@@ -624,12 +760,12 @@ if (isset($_POST['scale'])) {
 			$scalekey=$scalename;
 			break;
 		} else {
-			$scalekey='chromatic';
+			$scalekey='Chromatic';
 		}
 			
 	}
 } else {
-	$scalekey = 'chromatic';
+	$scalekey = 'Chromatic';
 }
 //start index selection
 /*
@@ -728,6 +864,13 @@ if (isset($_POST['input']) && $_POST['input']!='') {
 		}
 	}
 	$input = $tmps;
+	if ($input=='') {
+		unset($input);
+		array_push($errorarray,'No Parsable Input <div style="font-size:1em !important !important">Input needs to contain at least one letter a-z or A-Z</div>');
+	}
+}
+if (isset($_POST['input']) && $_POST['input']=='') {
+	array_push($errorarray,'Empty Input');
 }
 //$lastlog = file_get_contents($basedir.'moved.log');
 //echo $lastlog;
@@ -822,7 +965,7 @@ if (isset($randomnotelengths)) {
 if ($errorarray==array()) {
 	if (isset($input)) {
 		if (true) {
-			if (strlen($input)<2000) {
+			if (strlen($input)<2001) {
 				$tmp = array();
 				foreach ($inputarray as $letterkey) {
 					array_push($tmp,$filenames[$letterkey]);
@@ -915,12 +1058,12 @@ foreach ($majorscales as $scale) {
 */
 if ($errorarray!=array()) {
 	foreach ($errorarray as $error) {
-		echo '<div class="error">'.$error.'</div>';
+		echo '<div class="content error" style="margin:0;color:#ff0000 !important;background-color:#000000;">'.$error.'</div>';
 	}
 }
 if (isset($filename)) {
 ?>
-<a href="<?php echo $filename; ?>"><h1>Download</h1></a>
+<h1><a href="<?php echo $filename; ?>">Download</a></h1>
 <br>
 
 <?php
@@ -950,18 +1093,34 @@ echo $input;
 */ ?>
 <div class="box">
 <span class="fret">Fretboard</span>
-Highlight Scale <select onchange="changefrets()" id="guitarscales">
+Highlight Scale <select onchange="changefrets()" id="guitarscales" style="font-family:monospace;" onkeydown="changefrets()" onkeyup="changefrets()">
 <?php
+$replaceletters = array('&nbsp;','a','b','c','d','e','f','g',' ');
+
+$foreachc=0;
 foreach ($allscales as $scalename => $scale) {
-	if (isset($scalekey) && $scalekey==$scale) {
-	echo '<option value="'.$scalename.'" selected>'.$scalename.'</option>';
-	} else {
-	echo '<option value="'.$scalename.'">'.$scalename.'</option>';
+	if ($foreachc==0) {
+		$tmpscalename = str_replace($replaceletters,'',$scalename);
 	}
+	if ($tmpscalename!=str_replace($replaceletters,'',$scalename) || $scalename=='gb Arabian (b)') {
+		echo '<option value="!">--------------------</option>';
+	}
+	if (isset($scalekey) && $scalekey==$scale) {
+	echo '<option value="'.str_replace('&nbsp;',' ',$scalename).'" selected>'.$scalename.'</option>';
+	} else {
+	echo '<option value="'.str_replace('&nbsp;',' ',$scalename).'">'.$scalename.'</option>';
+	}
+	$foreachc++;
+	$tmpscalename = str_replace($replaceletters,'',$scalename);
+
 }
 ?>
 </select>
-<br>
+<form method="post" action="">
+<div>
+Add random notes from highlighted scale, Length <input type="text" name="randomjslength" value="<?php if (isset($_POST['randomjslength'])) {echo addquot(strip_tags($_POST['randomjslength'])); } else { echo '100'; } ?>" size="5" maxlength="4" id="randomlength"> <input id="generaterandom" type="button" value="Generate"> <input type="button" id="generaterandomnorepeat" value="Generate (No Repeat)">
+</div>
+
 <table class="guitar">
 <?php
 $rows = 6;
@@ -1003,16 +1162,13 @@ $onnote=24;
 
 <!-- </pre> -->
 Enter english alphabet letters you wish to be converted to music, max 2000 notes.<br>
-<form method="post" action="">
-<div class="centerdiv">
-<textarea onchange="charcount()" onkeydown="charcount()" onkeyup="charcount()" name="input" cols="50" rows="20" placeholder="Text to music!" id="input">
 
-<?php
+<div class="centerdiv">
+<textarea onchange="charcount()" onkeydown="charcount()" onkeyup="charcount()" name="input" cols="50" rows="20" placeholder="Text to music!" id="input"><?php
 if (isset($textareasave)) {
 	echo $textareasave;
 }
-?>
-</textarea>
+?></textarea>
 </div>
 <span id="charcount">Char Count:0</span><br>
 <a href="javascript:void(0);" style="display:block;"><div id="showhidetools" class="content mobilebutton" style="background-color:rgba(85,100,85,255);">Hide Tools</div></a>
@@ -1043,6 +1199,13 @@ if (isset($textareasave)) {
 	<textarea id="insert"></textarea></div> Into <div class="centerdiv"><textarea id="insertinto"></textarea></div> Every <input type="text" placeholder="Every X Characters" id="insertevery"> Characters
 
 	</div>
+
+	<div class="box">
+		<span class="shuffle">Shuffle</span> <input type="button" value="GO" onclick="shuffletext()"> <input type="button" value="Add" onclick="shuffletext(true)">
+		<br>
+
+		<div class="centerdiv"><textarea id="shuffle"></textarea></div>
+	</div>	
 </div>
 Scale <select name='scale' id="scales">
 <?php
@@ -1115,13 +1278,12 @@ if (isset($sequencearray)) {
 </textarea>
 </div>
 </div>
-<br>
 <?php /*
 Start Index <input type="text" name="startindex" size="3" maxlength="2" value="<?php if (isset($startindex)) { echo $startindex; } ?>">
 <br>
 */
 ?>
-<input type="submit">
+<input type="submit" value="Submit Query" style="font-size:2em;margin-bottom:1em;">
 </form>
 <?php
 if (isset($input)) {
@@ -1136,13 +1298,15 @@ if (isset($input)) {
 	<?php
 }
 ?>
-<div class="content" style="word-wrap: break-word;">
-<div class="box">
-<a href="catalog.php?page=1&limit=25"><h2>View Catalog</h2></a>
+<div class="content" style="word-wrap: break-word;padding:0;">
+<a href="catalog.php?page=1&limit=25">
+<div class="content" style="word-wrap: break-word;margin:0;background-color:rgba(85,100,85,255);">
+
+<h2 style="color:#00ff00 !important;">View Catalog</h2>
+
 </div>
-<br>
+</a>
 <h2>Recent Files</h2>
-<br>
 <?php
 /*
 $files = scandir('/var/www/html/music');
