@@ -6,7 +6,10 @@ $scriptfilename = $_SERVER["SCRIPT_FILENAME"];
 $startTime=microtime(true);
 $database = 'log';
 include '../log.php';
-include '../mysql.php'; 
+include '../mysql.php';
+function addquot($instring) {
+	return str_replace('"','&quot;',$instring);
+}
 function addinfo($file,$in,$scalekey,$notedir,$notelength,$connection) {
 
 	$f=mysqli_real_escape_string($connection,$file);
@@ -81,6 +84,9 @@ for ($i=0;$i<12;$i++) {
 			unset($tmp4[$j]);
 		}
 	}
+	if ($tmp4[0]==0) {
+		array_push($tmp4,48);
+	}
 	/*
 	if ($tmp4[count($tmp4)-1]==49) {
 		array_pop($tmp4);
@@ -104,7 +110,7 @@ $gpentatonicmajor = array(0,3,5,7,10);
 $gscales = array('major' => array(0,2,3,5,7,8,10), 'minor' => array(2,3,5,6,8,10,11), 'pentatonicmajor' => array(0,3,5,7,10), 'pentatonicminor' => array(1,3,6,8,10), 'majorarpeggio' => array(3,7,10), 'minorarpeggio' => array(3,6,10));
 //$majorscalenames = array('gbmajor', 'fmajor', 'emajor', 'ebmajor', 'dmajor', 'dbmajor', 'cmajor', 'bmajor', 'bbmajor', 'amajor', 'abmajor', 'gmajor');
 //$notedirectories = array('sawtooth.125/', 'sawtooth.25/', 'sawtooth.5/', 'sawtooth1.0/');
-$notedirectories = array('sawtooth','sawtooth-hard');
+$notedirectories = array('sawtooth-fade','sawtooth-hard');
 $notelengths = array();
 
 //test return11ScalesFromG($gscale,$scalename)
@@ -155,14 +161,26 @@ $genscalearr = return11ScalesFromG($scale,$scalename);
 <link href="/style.css" rel="stylesheet">
 <link rel="icon" type="image/png" href="/favicon.png">
 <style type="text/css">
+table {
+table-layout:fixed;
+
+}
+div.centerdiv {
+text-align:center;
+}
+div.mobilebutton div.content {
+background-color:rgba(85,100,85,255) !important;
+}
 textarea {
-	width:97%;
+	width:99%;
 	margin-left:auto;
 	margin-right:auto;
 	background-color:#262626;
 	color:#ffffff;
+	text-align:left;
 }
 table, td, tr {
+	table-layout:fixed;
 	border-collapse:collapse;
 }
 .alphabet td {
@@ -175,7 +193,7 @@ table, td, tr {
 	cursor:default;
 }
 .guitar td {
-	
+	text-align:center;
 	color:#33ff33;
 	border-style: solid;
 	border-width:1px;
@@ -183,6 +201,8 @@ table, td, tr {
 	cursor:pointer;
 	font-family:monospace;
 	font-size:1.2em;
+	padding:0;
+	margin:0;
 }
 .guitar td:nth-of-type(25n-24) {
 	
@@ -197,6 +217,23 @@ table, td, tr {
 	font-size:1.2em;
 	color:#ff6666;
 }
+
+@media only screen and (max-width: 500px) {
+.fret, .guitar td { 
+	font-size:.9em;
+	padding:0;
+
+}
+
+
+}
+@media only screen and (max-width: 450px) {
+.fret, .guitar td { 
+	font-size:.8em;
+	padding:0;
+}
+}
+
 .transpose {
 	font-size:1.2em;
 	color:#6666ff;
@@ -221,6 +258,7 @@ div.error {
 </style>
 <script type="text/javascript">
 function init() {
+	windowwidth = window.innerWidth;
 	transposei = document.getElementById("transpose");
 	semitones = document.getElementById("semitones");
 	reversei = document.getElementById("reverse");
@@ -269,24 +307,44 @@ function init() {
 	for (i=0;i<(alltds.length-1);i++) {
 		if (alltds[i].getAttribute("class")=="letter") {
 			//document.body.innerHTML+=i;
-			alltds[i].addEventListener('click',function (event) { input.value+=event.target.innerHTML; input.focus(); });
+			alltds[i].addEventListener('click',function (event) { input.value+=event.target.innerHTML; });
 		}
 	}
 	frettds = [];
 	for (i=0;i<25;i++) {
 		frettds[i]=document.getElementById("g"+i);
 	}
+	firstfret=true;
+	fretlengths=[]
 	for (i=0;i<25;i++) {
 		if (i!=0) {
-		frettds[i].style.width=((25-i)/5)+"em";
+			//frettds[i].style.width=((25-i)/5)+"em";
+			fretboardlength=windowwidth*2;
+			//frettds[i].style.width=((25-i)/10)+"em";
+
+			
+			if (firstfret==true) {
+				previousfretlength=(fretboardlength-(fretboardlength/(Math.pow(2,(i/12)))));
+				frettds[i].style.width=(fretboardlength-(fretboardlength/(Math.pow(2,(i/12)))))+"px";
+				firstfret=false;	
+			} else {		
+
+				frettds[i].style.width=((fretboardlength-(fretboardlength/(Math.pow(2,(i/12)))))-previousfretlength)+"px";
+				previousfretlength=(fretboardlength-(fretboardlength/(Math.pow(2,(i/12)))));
+
+
+			}
 		}
 	}
+
 	changefrets();
 	charcount();
 	disablenotelength();
 	selectnotelengths(document.getElementById("notetype"));
 	disableother(document.getElementById("randomnotelength"));
 	disableother(document.getElementById("sequence"));
+
+	document.getElementById("showhidetools").addEventListener("click", function () { hideshow(document.getElementById("showhidetools"),document.getElementById("tools")); console.log(1); });
 
 }
 function disablenotelength() {
@@ -444,7 +502,11 @@ function selectnotelengths(notetype) {
 }
 function disableother(object) {
 	current = object.getAttribute("name");
-	
+	/*
+Between <input id="sequencestart" type="text" value=".05"> and <input id="sequenceend" type="text">
+<br>
+Multiples of <input id="sequencemultiples" type="text"> offset by <input id="sequencemultiplesoffset" type="text" value="0"> <input type="button" value="GO" onclick="generatesequence()"> <input type="button" value="Add" onclick="generatesequence(true)">
+*/
 	if (current=='sequence' && object.checked==true) {
 		document.getElementById("notelengths");
 		for (i=0;i<notetypes.length;i++) {
@@ -455,6 +517,14 @@ function disableother(object) {
 		document.getElementById("randomend").disabled=true;
 		document.getElementById("multiples").disabled=true;
 	}
+	if (current=='sequence' && object.checked==false) {
+		document.getElementById("sequencestart").disabled=true;
+		document.getElementById("sequenceend").disabled=true;
+		document.getElementById("sequencemultiples").disabled=true;
+		document.getElementById("sequencemultiplesoffset").disabled=true;
+	}
+	
+	
 	if (current=='randomnotelength' && object.checked==true) {
 		for (i=0;i<notetypes.length;i++) {
 			document.getElementById(notetypes[i]+"-notelengths").disabled=true;
@@ -468,6 +538,11 @@ function disableother(object) {
 		document.getElementById("randomstart").disabled=false;
 		document.getElementById("randomend").disabled=false;
 		document.getElementById("multiples").disabled=false;
+	} else {
+		document.getElementById("sequencestart").disabled=false;
+		document.getElementById("sequenceend").disabled=false;
+		document.getElementById("sequencemultiples").disabled=false;
+		document.getElementById("sequencemultiplesoffset").disabled=false;
 	}
 	if (document.getElementById('randomnotelength').checked==false) {
 		document.getElementById("randomstart").disabled=true;
@@ -511,10 +586,32 @@ function generatesequence(add) {
 		
 	}
 }
+function hideshow(changetextelement,object) {
+		console.log(changetextelement,object.style.display);
+		
+	if (object.style.display=="none") {
+		object.style.display="block";	
+		changetextelement.innerHTML="Hide Tools";
+	} else {
+		object.style.display="none";
+		changetextelement.innerHTML="Show Tools";
+	}
+}
+
 </script>
 </head>
 <body onload="init()">
 <div class="page">
+<header>
+	<h1 class="ross"><a href="/">Ross Carley</a></h1><h2> > Music Generator</h2>
+</header>
+<a href="catalog.php?page=1&limit=25">
+<div class="content" style="word-wrap: break-word;margin:0;background-color:rgba(85,100,85,255);">
+
+<h2 style="color:#00ff00 !important;">View Catalog</h2>
+
+</div>
+</a>
 <div class="content">
 <!-- <pre> -->
 
@@ -578,6 +675,7 @@ if (isset($_POST['notelength']) && $_POST['notelength']!='') {
 }
 //sequence selection
 if (isset($_POST['sequence']) && $_POST['sequence']=='true' && !isset($_POST['randomnotelength'])) {
+	$sequencestring=$_POST['sequencelist'];
 	$psequencearray = explode(',',$_POST['sequencelist']);
 	//print_r($psequencearray);
 	if (count($psequencearray)>0) {
@@ -755,6 +853,8 @@ if ($errorarray==array()) {
 				if (isset($randomnotelengths)) {
 					$notelength='Random';
 					$listname = md5($input.$scalekey.$startindex.$notelength.$notedir.$startTime);
+				} elseif (isset($sequencearray)) {
+					$listname = md5($input.$scalekey.$startindex.$notelength.$notedir.$sequencestring);
 				} else {
 					$listname = md5($input.$scalekey.$startindex.$notelength.$notedir);
 				}
@@ -827,7 +927,7 @@ if (isset($filename)) {
 echo $input;
 }
 ?>
-<br>
+<?php /*
 
 <table class="alphabet">
 
@@ -847,6 +947,7 @@ echo $input;
 	echo '</tr>';
 ?>
 </table>
+*/ ?>
 <div class="box">
 <span class="fret">Fretboard</span>
 Highlight Scale <select onchange="changefrets()" id="guitarscales">
@@ -867,7 +968,11 @@ $rows = 6;
 $cols = 25;
 	echo '<tr class="gnumbers">';	
 	for ($h=0;$h<$cols;$h++) {
+		if ($h<10) {
+		echo '<td id="g'.$h.'">&nbsp;'.$h.'</td>';
+		} else {
 		echo '<td id="g'.$h.'">'.$h.'</td>';
+		}
 	}
 	echo '</tr>';
 $guitarindex = (5*5)-1;
@@ -899,30 +1004,45 @@ $onnote=24;
 <!-- </pre> -->
 Enter english alphabet letters you wish to be converted to music, max 2000 notes.<br>
 <form method="post" action="">
+<div class="centerdiv">
 <textarea onchange="charcount()" onkeydown="charcount()" onkeyup="charcount()" name="input" cols="50" rows="20" placeholder="Text to music!" id="input">
+
 <?php
 if (isset($textareasave)) {
 	echo $textareasave;
 }
 ?>
 </textarea>
-<span id="charcount">Char Count:0</span>
-<div class="box">
-<span class="transpose">Transpose</span>
-<br>
-Semitones <input type="text" value="0" id="semitones"> <input type="button" value="GO" onclick="transposenotes()"> <input type="button" value="Add" onclick="transposenotes(true)">
-<br>
-<textarea id="transpose" rows="3"></textarea>
 </div>
-<div class="box">
-<span class="reverse">Reverse</span> <input type="button" value="GO" onclick="reverseString()"> <input type="button" value="Add" onclick="reverseString(true)">
-<br>
-<textarea id="reverse" rows="2"></textarea>
-</div>
-<div class="box">
-<span class="insert">Insert</span> <input type="button" value="GO" onclick="insertString()"> <input type="button" value="Add" onclick="insertString(true)">
-<br>
-<textarea id="insert"></textarea> Into <textarea id="insertinto"></textarea> Every <input type="text" placeholder="Every X Characters" id="insertevery"> Characters
+<span id="charcount">Char Count:0</span><br>
+<a href="javascript:void(0);" style="display:block;"><div id="showhidetools" class="content mobilebutton" style="background-color:rgba(85,100,85,255);">Hide Tools</div></a>
+<div id="tools">
+	<h2>Tools</h2>
+	<br>
+	<div class="box">
+	<span class="transpose">Transpose</span>
+	<br>
+	Semitones <input type="text" value="0" id="semitones"> <input type="button" value="GO" onclick="transposenotes()"> <input type="button" value="Add" onclick="transposenotes(true)">
+	<br>
+	<div class="centerdiv">
+	<textarea id="transpose" rows="3"></textarea>
+	</div>
+	</div>
+
+	<div class="box">
+	<span class="reverse">Reverse</span> <input type="button" value="GO" onclick="reverseString()"> <input type="button" value="Add" onclick="reverseString(true)">
+	<br>
+	<div class="centerdiv">
+	<textarea id="reverse" rows="2"></textarea>
+	</div>
+	</div>
+	<div class="box">
+	<span class="insert">Insert</span> <input type="button" value="GO" onclick="insertString()"> <input type="button" value="Add" onclick="insertString(true)">
+	<br>
+	<div class="centerdiv">
+	<textarea id="insert"></textarea></div> Into <div class="centerdiv"><textarea id="insertinto"></textarea></div> Every <input type="text" placeholder="Every X Characters" id="insertevery"> Characters
+
+	</div>
 </div>
 Scale <select name='scale' id="scales">
 <?php
@@ -977,7 +1097,8 @@ Generate
 <br>
 Between <input id="sequencestart" type="text" value=".05"> and <input id="sequenceend" type="text">
 <br>
-Multiples of <input id="sequencemultiples" type="text"> offset by <input id="sequencemultiplesoffset" type="text"> <input type="button" value="GO" onclick="generatesequence()"> <input type="button" value="Add" onclick="generatesequence(true)">
+Multiples of <input id="sequencemultiples" type="text"> offset by <input id="sequencemultiplesoffset" type="text" value="0"> <input type="button" value="GO" onclick="generatesequence()"> <input type="button" value="Add" onclick="generatesequence(true)">
+<div class="centerdiv">
 <textarea name="sequencelist" id="sequencelist" rows="3"><?php
 if (isset($sequencearray)) { 
 	$foreachc=1;
@@ -992,6 +1113,7 @@ if (isset($sequencearray)) {
 } 
 ?>
 </textarea>
+</div>
 </div>
 <br>
 <?php /*
@@ -1015,6 +1137,10 @@ if (isset($input)) {
 }
 ?>
 <div class="content" style="word-wrap: break-word;">
+<div class="box">
+<a href="catalog.php?page=1&limit=25"><h2>View Catalog</h2></a>
+</div>
+<br>
 <h2>Recent Files</h2>
 <br>
 <?php
@@ -1037,7 +1163,9 @@ include '../stats.php';
 </div>
 </div>
 </div>
+<?php /* ?>
 <pre>
 <?php print_r($allscales); ?>
 </pre>
+<?php */ ?>
 </body>
